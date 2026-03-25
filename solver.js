@@ -4,7 +4,6 @@
 function load(p) { document.getElementById('inp').value = p; }
 
 // Compute P(10,n) = 10 × 9 × ... × (10-n+1)
-// = total permutations of n digits chosen from 0-9
 function P10(n) {
   let r = 1;
   for (let i = 10; i > 10 - n; i--) r *= i;
@@ -13,7 +12,6 @@ function P10(n) {
 
 // ══════════════════════════════════════════════
 //  STEP 1 — PARSE
-//  Read the raw string and extract words + letters
 // ══════════════════════════════════════════════
 function parse(raw) {
   const s = raw.replace(/\s+/g, '').toUpperCase();
@@ -27,13 +25,11 @@ function parse(raw) {
   for (const w of words)
     if (!/^[A-Z]+$/.test(w)) throw 'Words must contain letters only.';
 
-  // Unique letters, sorted
   const letters = [...new Set(words.join(''))].sort();
 
   if (letters.length > 10)
     throw `Too many unique letters (${letters.length}). Maximum is 10.`;
 
-  // First letter of each word — cannot map to 0
   const leading = new Set(words.map(w => w[0]));
 
   return { words, letters, leading };
@@ -41,19 +37,15 @@ function parse(raw) {
 
 // ══════════════════════════════════════════════
 //  STEP 2 — CHECK ONE ASSIGNMENT
-//  Given map {letter → digit}, test the equation
 // ══════════════════════════════════════════════
 function check(words, leading, map) {
-  // Constraint: leading letters cannot be 0
   for (const l of leading)
     if (map[l] === 0) return null;
 
-  // Convert each word to its number using the map
   const nums = words.map(w =>
     Number(w.split('').map(c => map[c]).join(''))
   );
 
-  // Sum of addends must equal the result word
   const addends = nums.slice(0, -1);
   const result  = nums[nums.length - 1];
   return addends.reduce((a, b) => a + b, 0) === result ? nums : null;
@@ -61,14 +53,12 @@ function check(words, leading, map) {
 
 // ══════════════════════════════════════════════
 //  STEP 3 — BRUTE FORCE
-//  Generate ALL permutations; test each one
 // ══════════════════════════════════════════════
-function bruteForce(words, letters, leading, onTick) {
+function bruteForce(words, letters, leading) {
   const n     = letters.length;
   const total = P10(n);
   let tried   = 0;
 
-  // Recursive generator: pick n digits from pool without repeating
   function* permutations(chosen, pool) {
     if (chosen.length === n) { yield chosen; return; }
     for (let i = 0; i < pool.length; i++) {
@@ -84,74 +74,47 @@ function bruteForce(words, letters, leading, onTick) {
   for (const perm of permutations([], digits)) {
     tried++;
 
-    // Build the letter→digit map for this permutation
     const map = {};
     for (let i = 0; i < n; i++) map[letters[i]] = perm[i];
 
-    // Update the progress bar every 5000 attempts
-    if (tried % 5000 === 0) onTick(tried, total, map);
-
-    // Test this assignment
     const nums = check(words, leading, map);
-    if (nums) return { map, nums, tried, total };   // found!
+    if (nums) return { map, nums, tried, total };
   }
 
-  return { map: null, nums: null, tried, total };   // no solution
+  return { map: null, nums: null, tried, total };
 }
 
 // ══════════════════════════════════════════════
-//  UI — SOLVE (main entry point)
+//  UI — SOLVE
 // ══════════════════════════════════════════════
 function solve() {
-  const raw      = document.getElementById('inp').value.trim();
-  const btn      = document.getElementById('go');
-  const progWrap = document.getElementById('progress-wrap');
-  const result   = document.getElementById('result');
+  const raw    = document.getElementById('inp').value.trim();
+  const btn    = document.getElementById('go');
+  const result = document.getElementById('result');
 
-  // Reset UI state
-  result.style.display   = 'none';
-  progWrap.style.display = 'block';
-  setBar(0, 1);
-  document.getElementById('trying-now').textContent = 'Initialising…';
-  btn.disabled = true;
+  result.style.display = 'none';
+  btn.disabled    = true;
   btn.textContent = 'Solving…';
 
-  // Defer to let the browser paint the UI before the heavy loop
   setTimeout(() => {
     try {
       const { words, letters, leading } = parse(raw);
 
       const t0  = performance.now();
-      const res = bruteForce(words, letters, leading, (tried, total, map) => {
-        setBar(tried, total);
-        const preview = letters.map(l => `${l}=${map[l]}`).join('  ');
-        document.getElementById('trying-now').textContent = 'Trying: ' + preview;
-      });
-      const ms = (performance.now() - t0).toFixed(1);
-
-      setBar(res.tried, res.total);
-      document.getElementById('trying-now').textContent =
-        res.map ? '✓ Solution found!' : '✗ No solution found.';
+      const res = bruteForce(words, letters, leading);
+      const ms  = (performance.now() - t0).toFixed(1);
 
       result.style.display = 'block';
       render(result, raw, words, letters, leading, res, ms);
 
     } catch(e) {
-      progWrap.style.display = 'none';
-      result.style.display   = 'block';
+      result.style.display = 'block';
       result.innerHTML = `<div class="err-box">⚠ ${e}</div>`;
     }
 
     btn.disabled    = false;
     btn.textContent = 'SOLVE →';
   }, 30);
-}
-
-function setBar(tried, total) {
-  const pct = total ? Math.min(100, tried / total * 100) : 0;
-  document.getElementById('prog-bar').style.width = pct + '%';
-  document.getElementById('prog-count').textContent =
-    tried.toLocaleString() + ' / ' + total.toLocaleString();
 }
 
 // ══════════════════════════════════════════════
@@ -256,7 +219,6 @@ function render(el, raw, words, letters, leading, res, ms) {
     </div>`;
 }
 
-// Build a plain step string
 function St(n, html) {
   return `<div class="step"><div class="sn">${n}</div><div class="st">${html}</div></div>`;
 }

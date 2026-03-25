@@ -10,6 +10,7 @@
 <div class="wrap">
 
   <header>
+    <div class="label">AI Search — Brute Force</div>
     <h1>Crypto<em>arithmetic</em> Solver</h1>
     <p class="sub">Each letter maps to a unique digit &nbsp;·&nbsp; Leading letters ≠ 0</p>
   </header>
@@ -27,21 +28,9 @@
       <input id="inp" type="text" value="SEND + MORE = MONEY"
              placeholder="WORD + WORD = WORD"
              onkeydown="if(event.key==='Enter')solve()">
-      <button id="go" onclick="solve()">Solve</button>
+      <button id="go" onclick="solve()">SOLVE →</button>
     </div>
     <p class="hint">// letters only · one + · one =</p>
-  </div>
-
-  <div class="panel" id="progress-wrap">
-    <div class="panel-title">Brute Force — Live Progress</div>
-    <div class="prog-info">
-      <span>Permutations tried</span>
-      <span id="prog-count">0</span>
-    </div>
-    <div class="prog-bar-bg">
-      <div class="prog-bar-fill" id="prog-bar"></div>
-    </div>
-    <div class="trying-word" id="trying-now"></div>
   </div>
 
   <div class="panel" id="result"></div>
